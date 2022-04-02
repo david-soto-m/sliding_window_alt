@@ -2,7 +2,7 @@
 name = "sliding_window_alt"
 version = "0.1.0"
 edition = "2021"
-license = "Unlicense or MIT"
+license = "Unlicense"
 repository = "https://github.com/david-soto-m/sliding_window_alt"
 categories = ["data-structures"]
 keywords = ["Sliding-window", "Control", "data-structures"]
