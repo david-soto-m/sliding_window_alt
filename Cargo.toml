@@ -5,7 +5,7 @@ edition = "2021"
 license = "Unlicense or MIT"
 repository = "https://github.com/david-soto-m/sliding_window_alt"
 categories = ["data-structures"]
-keywords = ["Sliding window", "Control", "data-structures"]
+keywords = ["Sliding-window", "Control", "data-structures"]
 description = "A structure that holds the last N items pushed to it."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
