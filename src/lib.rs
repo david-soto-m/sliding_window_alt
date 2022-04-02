@@ -209,9 +209,8 @@ impl<T> SlidingWindow<T>
 where
     T: Clone,
 {
-    /// To create a sliding window use:
     /// The first item is the capacity of the sliding window and the second the
-    /// initial value of all the elements. **At creation, all elements are set**
+    /// initial value of all the elements. **At creation, all elements are set.**
     pub fn new(mut max_items: usize, init: T) -> SlidingWindow<T> {
         if max_items < 1 {
             max_items = 1;
@@ -222,21 +221,21 @@ where
             capacity: max_items,
         }
     }
-    /// Push an element to the window, forgetting the oldest
+    /// Push an element to the window, forgetting the oldest.
     pub fn push(&mut self, a: T) {
         self.vec[self.capacity - 1 - self.current_insert] = a;
         self.current_insert += 1;
         self.current_insert %= self.capacity;
     }
-    /// push a slices, where the newest item is at index 0.
+    /// Push a slice, where the newest item is at index 0.
     pub fn push_slice(&mut self, a: &[T]) {
         a.iter().rev().for_each(|a| {
             self.push(a.to_owned());
         });
     }
 
-    /// returns the total capacity of the sliding window, though you should know
-    /// it as there is a fixed size since creation.
+    /// Returns the total capacity of the sliding window, though you should know
+    /// it, as there is a fixed size since creation.
     pub fn capacity(&self) -> usize {
         self.capacity
     }
@@ -246,14 +245,14 @@ where
     }
 
     /// Returns an ordered iterator, where the first element is the newest and
-    /// the last the oldest
+    /// the last, the oldest.
     pub fn iter(&self) -> Chain<Iter<T>, Iter<T>> {
         // it doesn't rely on as_vec, bcs this way is lazier
         let (a, b) = self.vec.split_at(self.splitter());
         b.iter().chain(a.iter())
     }
 
-    /// Returns a mutable iterator in the same order as iter
+    /// Returns a mutable iterator in the same order as the `iter` method.
     pub fn iter_mut(&mut self) -> Chain<IterMut<T>, IterMut<T>> {
         let (a, b) = self.vec.split_at_mut(self.capacity - self.current_insert);
         b.iter_mut().chain(a.iter_mut())
