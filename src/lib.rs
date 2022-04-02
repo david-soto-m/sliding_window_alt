@@ -1,4 +1,6 @@
-//! A wrapper for vectors on a sliding window squeme
+//! A structure that holds the last N items pushed to it.
+//! It is a wrapper around the standard vectors.
+//! Read [this](https://github.com/david-soto-m/sliding_window_alt/blob/main/README.md) for more context.
 #[doc = include_str!("../README.md")]
 use std::iter::{Chain, Iterator};
 use std::ops::Index;
@@ -191,6 +193,7 @@ mod tests {
     }
 }
 
+/// A structure that holds the last N items pushed to it.
 #[derive(Debug)]
 pub struct SlidingWindow<T>
 where
@@ -206,6 +209,9 @@ impl<T> SlidingWindow<T>
 where
     T: Clone,
 {
+    /// To create a sliding window use:
+    /// The first item is the capacity of the sliding window and the second the
+    /// initial value of all the elements. **At creation, all elements are set**
     pub fn new(mut max_items: usize, init: T) -> SlidingWindow<T> {
         if max_items < 1 {
             max_items = 1;
@@ -216,18 +222,21 @@ where
             capacity: max_items,
         }
     }
+    /// Push an element to the window, forgetting the oldest
     pub fn push(&mut self, a: T) {
         self.vec[self.capacity - 1 - self.current_insert] = a;
         self.current_insert += 1;
         self.current_insert %= self.capacity;
     }
-
+    /// push a slices, where the newest item is at index 0.
     pub fn push_slice(&mut self, a: &[T]) {
         a.iter().rev().for_each(|a| {
             self.push(a.to_owned());
         });
     }
 
+    /// returns the total capacity of the sliding window, though you should know
+    /// it as there is a fixed size since creation.
     pub fn capacity(&self) -> usize {
         self.capacity
     }
@@ -236,17 +245,21 @@ where
         self.capacity - self.current_insert
     }
 
+    /// Returns an ordered iterator, where the first element is the newest and
+    /// the last the oldest
     pub fn iter(&self) -> Chain<Iter<T>, Iter<T>> {
         // it doesn't rely on as_vec, bcs this way is lazier
         let (a, b) = self.vec.split_at(self.splitter());
         b.iter().chain(a.iter())
     }
 
+    /// Returns a mutable iterator in the same order as iter
     pub fn iter_mut(&mut self) -> Chain<IterMut<T>, IterMut<T>> {
         let (a, b) = self.vec.split_at_mut(self.capacity - self.current_insert);
         b.iter_mut().chain(a.iter_mut())
     }
 
+    /// Returns a vector that starts at the newest element.
     pub fn to_vec(&self) -> Vec<T> {
         let (a, b) = self.vec.split_at(self.splitter());
         [b, a].concat()
