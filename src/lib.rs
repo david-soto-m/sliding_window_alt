@@ -1,6 +1,7 @@
 //! A wrapper for vectors on a sliding window squeme
-
+#[doc = include_str!("../README.md")]
 use std::iter::{Chain, Iterator};
+use std::ops::Index;
 use std::slice::{Iter, IterMut};
 use std::vec::IntoIter;
 
@@ -49,7 +50,7 @@ mod tests {
     #[test]
     fn into_vec() {
         let a = vec![1, 1, 2];
-        let st: SlidingWindow<u8> = a.as_slice().into();
+        let st: SlidingWindow<u8> = a[..].into();
         assert_eq!(st, &a[..])
     }
     #[test]
@@ -95,11 +96,22 @@ mod tests {
         st.push(2);
         let a = [2, 1, 2, 3];
         // println!("{:?}, {:?}",st, a);
-        // internally the vector is diffrent, it its not correctly reordered
+        // internally the vector is different, if its not correctly reordered
         // this will fail
         st.iter().zip(a).for_each(|(i, j)| {
             assert_eq!(*i, j);
         });
+    }
+    #[test]
+    fn use_iter_no_modif() {
+        let a = [1, 2, 3, 4];
+        let mut st = SlidingWindow::from(a);
+        st.iter().map(|x| x * x).count();
+        assert!(st.iter().zip(a).all(|(x, y)| { *x == y }));
+        st.iter_mut().map(|x| *x *= *x).count();
+        st.iter().zip(a).for_each(|(x, y)| {
+            assert_eq!(*x, y * y);
+        })
     }
     #[test]
     fn use_iter_mut() {
@@ -120,9 +132,65 @@ mod tests {
         }
         assert_eq!(st, &b[..]);
     }
+    #[test]
+    fn index() {
+        let a = [1, 2, 3, 4, 5];
+        let mut st = SlidingWindow::from(a);
+        assert!(a
+            .iter()
+            .enumerate()
+            .all(|(index, value)| { *value == st[index] }));
+        st.push(5);
+        let a = [5, 1, 2, 3, 4];
+        assert!(a
+            .iter()
+            .enumerate()
+            .all(|(index, value)| { *value == st[index] }));
+        st.push_slice(&[5, 3]);
+        let a = [5, 3, 5, 1, 2];
+        a.iter().enumerate().for_each(|(index, value)| {
+            assert_eq!(*value, st[index]);
+        });
+    }
+    #[test]
+    fn partialeqs() {
+        let a = [5; 4];
+        let st = SlidingWindow::new(4, 5);
+        assert_eq!(st, a);
+        let a = vec![1, 5, 6, 7, -8];
+        let st = SlidingWindow::from(&a[..]);
+        assert_eq!(st, &a[..]);
+    }
+    #[test]
+    fn partialneqs() {
+        // longer
+        let a = [5; 5];
+        let st = SlidingWindow::new(4, 5);
+        assert_ne!(st, a);
+        let mut a = vec![1, 5, 6, -7, 8];
+        let st = SlidingWindow::from(&a[..]);
+        a.push(5);
+        assert_ne!(st, &a[..]);
+        // Shorter
+        let a = [5; 3];
+        let st = SlidingWindow::new(4, 5);
+        assert_ne!(st, a);
+        let mut a = vec![1, 5, 6, 7, 8];
+        let st = SlidingWindow::from(&a[..]);
+        a.pop();
+        assert_ne!(st, &a[..]);
+        // different
+        let a = [5, -5, 5, 3];
+        let st = SlidingWindow::new(4, 5);
+        assert_ne!(st, a);
+        let mut a = vec![1, 5, 6, 7, 8];
+        let st = SlidingWindow::from(&a[..]);
+        a.pop();
+        a.push(4);
+        assert_ne!(st, &a[..]);
+    }
 }
 
-#[doc = include_str!("../README.md")]
 #[derive(Debug)]
 pub struct SlidingWindow<T>
 where
@@ -179,7 +247,7 @@ where
         b.iter_mut().chain(a.iter_mut())
     }
 
-    pub fn as_vec(&self) -> Vec<T> {
+    pub fn to_vec(&self) -> Vec<T> {
         let (a, b) = self.vec.split_at(self.splitter());
         [b, a].concat()
     }
@@ -189,7 +257,7 @@ impl<T: Clone> IntoIterator for SlidingWindow<T> {
     type Item = T;
     type IntoIter = IntoIter<Self::Item>;
     fn into_iter(self) -> Self::IntoIter {
-        self.as_vec().into_iter()
+        self.to_vec().into_iter()
     }
 }
 
@@ -197,7 +265,7 @@ impl<T: Clone> IntoIterator for &SlidingWindow<T> {
     type Item = T;
     type IntoIter = IntoIter<Self::Item>;
     fn into_iter(self) -> Self::IntoIter {
-        self.as_vec().into_iter()
+        self.to_vec().into_iter()
     }
 }
 
@@ -241,19 +309,28 @@ impl<T: Clone> From<&[T]> for SlidingWindow<T> {
 
 impl<T: Clone + PartialEq> PartialEq for SlidingWindow<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.as_vec() == other.as_vec()
-        // Implicity compares capacities
+        self.capacity == other.capacity && self.iter().zip(other.iter()).all(|(x, y)| x == y)
     }
 }
 
 impl<T: Clone + PartialEq> PartialEq<&[T]> for SlidingWindow<T> {
     fn eq(&self, other: &&[T]) -> bool {
-        self.as_vec() == *other
+        self.capacity == other.len() && self.iter().zip(*other).all(|(x, y)| x == y)
     }
 }
 
-impl<T: Clone + PartialEq, const LEN: usize> PartialEq<[T; LEN]> for SlidingWindow<T> {
+impl<T, const LEN: usize> PartialEq<[T; LEN]> for SlidingWindow<T>
+where
+    T: Clone + PartialEq,
+{
     fn eq(&self, other: &[T; LEN]) -> bool {
-        self.as_vec() == other
+        self.capacity == LEN && self.iter().zip(other.iter()).all(|(x, y)| x == y)
+    }
+}
+
+impl<T: Clone> Index<usize> for SlidingWindow<T> {
+    type Output = T;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.vec[(self.capacity - self.current_insert + index) % self.capacity]
     }
 }
