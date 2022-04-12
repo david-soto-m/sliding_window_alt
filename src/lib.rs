@@ -1,6 +1,7 @@
 //! A structure that holds the last N items pushed to it.
 //! It is a wrapper around the standard vectors.
 //! Read [this](https://github.com/david-soto-m/sliding_window_alt/blob/main/README.md) for more context.
+use std::fmt::Debug;
 #[doc = include_str!("../README.md")]
 use std::iter::{Chain, Iterator};
 use std::ops::Index;
@@ -204,7 +205,6 @@ where
     capacity: usize,
 }
 
-use std::fmt::Debug;
 impl<T> SlidingWindow<T>
 where
     T: Clone,
@@ -225,7 +225,9 @@ where
     pub fn push(&mut self, a: T) {
         self.vec[self.capacity - 1 - self.current_insert] = a;
         self.current_insert += 1;
-        self.current_insert %= self.capacity;
+        if self.current_insert >= self.capacity {
+            self.current_insert = 0;
+        }
     }
     /// Push a slice, where the newest item is at index 0.
     pub fn push_slice(&mut self, a: &[T]) {
@@ -233,34 +235,27 @@ where
             self.push(a.to_owned());
         });
     }
-
     /// Returns the total capacity of the sliding window, though you should know
     /// it, as there is a fixed size since creation.
     pub fn capacity(&self) -> usize {
         self.capacity
     }
-
-    fn splitter(&self) -> usize {
-        self.capacity - self.current_insert
-    }
-
     /// Returns an ordered iterator, where the first element is the newest and
     /// the last, the oldest.
+    #[inline]
     pub fn iter(&self) -> Chain<Iter<T>, Iter<T>> {
         // it doesn't rely on as_vec, bcs this way is lazier
-        let (a, b) = self.vec.split_at(self.splitter());
+        let (a, b) = self.vec.split_at(self.capacity - self.current_insert);
         b.iter().chain(a.iter())
     }
-
     /// Returns a mutable iterator in the same order as the `iter` method.
     pub fn iter_mut(&mut self) -> Chain<IterMut<T>, IterMut<T>> {
         let (a, b) = self.vec.split_at_mut(self.capacity - self.current_insert);
         b.iter_mut().chain(a.iter_mut())
     }
-
     /// Returns a vector that starts at the newest element.
     pub fn to_vec(&self) -> Vec<T> {
-        let (a, b) = self.vec.split_at(self.splitter());
+        let (a, b) = self.vec.split_at(self.capacity - self.current_insert);
         [b, a].concat()
     }
 }

@@ -6,7 +6,7 @@ fn main() {
     // caracteristical polynomial of the system, it's stable
     let carac_pol = [0.5, -0.4, 0.2, -0.3, 0.05];
 
-    for _ in 0..=100 {
+    for _ in 1..=100 {
         sys.push(
             sys.iter()
                 .zip(carac_pol)

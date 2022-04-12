@@ -5,7 +5,7 @@ at position `0` the newest element and at position `capacity` the oldest.
 Whenever you push an item, said item is stored at position `0`, everything
 shifts, and the last position is forgotten.
 
-For some speed gain, this is not how it internally works. Internall, it has an
+For some speed gain, this is not how it internally works. Internally, it has an
 index that moves, always pointing to the oldest element in the set. This way
 insertions are O(1).
 
@@ -26,7 +26,7 @@ searched for a sliding window.
 [circular_queue](https://crates.io/crates/circular-queue) is pretty much the
 same as this crate, except that this crate doesn't provide several possible
 orders, but provide more possible comparisons and ways of creating and pushing
-and a vector return. It doesn't allow indexing, which this create does, mostly
+and a vector return. It doesn't allow indexing, which this crate does, mostly
 inspired by...
 
 [sliding_window](https://crates.io/crates/sliding_window) has a similar
@@ -36,15 +36,18 @@ speed and portability.
 
 However, I have published this crate. My reasons are:
 
-1. It is always filled from the creations, always returning same sized iterators
-and vectors. This is specially useful for mathematical manipulations. This
-would be a breaking change for the other crates, and is the reason there is a
-new crate instead of a contribution to those crates.
+1. It is always filled from the creation, always returning same sized
+iterators and vectors. This is specially useful for mathematical manipulations.
+This would be a breaking change for the other crates, and is the reason there
+is a new crate instead of a contribution to those crates.
 
 1. It adds on to `circular_queue` indexing, vector return, and a bunch of
 `PartialEqs` implementations.
 
 1. It is 100% safe.
+
+1. Has no dependencies and is fast to build, (it's a small target, where
+actual LOC are about 130).
 
 # How
 
@@ -76,7 +79,7 @@ fn main() {
 ## Declaring
 
 There are three ways of creating a sliding window. One with new, and two froms.
-You can create from an array, (not Vec!!) or a slice.
+You can create from an array, (not `Vec`!!) or a slice.
 
 ## Converting
 
@@ -101,6 +104,27 @@ newest element and `capacity` is the oldest.
 ## Vector
 
 If you need to perform some analysis for your application, you can obtain a
-vector from the `sliding_window`. **This operation is O(n)**, use it when you
+vector from the `to_vec` method. **This operation is O(n)**, use it when you
 genuinely need a vector.
 
+
+# Benchmarks
+
+There are some benchmarks for the code and a comparison with the alternative
+crates presented earlier.
+
+| Criteria| Wins | Loses|
+|:-|:-:|-:|
+|Creation|Queues/Sliding Windows (?[^1])|this crate|
+|Insertion|this crate|Queues[^2]|
+|Iteration|this crate/ circular_queue| sliding_window|
+|Full workflow (initialization not required)| sliding_window|circular_queue|
+|Full workflow (initialization required)| this crate| sliding_window|
+
+My recommendation is that if you don't require a fixed length, use
+sliding_window, else, use this one. CircularBuffer from the Queues crate is
+unlikely to optimally solve your problems.
+
+[^1]: Unknown, because I'm unable to blackbox the amount of items on creation.
+[^2]: Queues does not offer iterators nor ways to access all the data in the
+queue and therefore can't compete in the other categories.
