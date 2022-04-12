@@ -10,3 +10,12 @@ description = "A structure that holds the last N items pushed to it."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[dev-dependencies]
+criterion = "0.3"
+circular-queue = "0.2.6"
+sliding_window = "0.1.2"
+queues = "1.1.0"
+
+[[bench]]
+name = "bench_1"
+harness = false
