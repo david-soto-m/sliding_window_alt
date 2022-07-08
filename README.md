@@ -25,9 +25,9 @@ searched for a sliding window.
 
 [circular_queue](https://crates.io/crates/circular-queue) is pretty much the
 same as this crate, except that this crate doesn't provide several possible
-orders, but provide more possible comparisons and ways of creating and pushing
-and a vector return. It doesn't allow indexing, which this crate does, mostly
-inspired by...
+orders. On the other hand this create provides more ways of creating and
+pushing items, more comparisons, and a vector return. It doesn't allow
+indexing, which this crate does, mostly inspired by...
 
 [sliding_window](https://crates.io/crates/sliding_window) has a similar
 functionality as `circular_queue`, but is `no_std` and has some unsafe code. It
@@ -36,8 +36,8 @@ speed and portability.
 
 However, I have published this crate. My reasons are:
 
-1. It is always filled from the creation, always returning same sized
-iterators and vectors. This is specially useful for mathematical manipulations.
+1. It is always filled from the creation, always returning iterators and vectors
+of  the same size. This is specially useful for some mathematical manipulations.
 This would be a breaking change for the other crates, and is the reason there
 is a new crate instead of a contribution to those crates.
 
@@ -51,13 +51,15 @@ actual LOC are about 130).
 
 # How
 
-There are several examples in the examples folders. Here is some code to get a
-feel for the library.
+There are several examples in the `examples` folder. Here is some code to get
+a feel for the library.
 
 ```rust
 use sliding_window_alt::SlidingWindow;
 
 fn main() {
+    // Stores the useful information for a model of a system. In this case the
+    // latest 5 outputs of the system
     let mut sys = SlidingWindow::new(5, 0.0);
 
     // caracteristical polynomial of the system, it's stable
@@ -68,8 +70,8 @@ fn main() {
             sys.iter()
                 .zip(carac_pol)
                 .map(|(item, coef)| coef * *item)
-                .sum::<f64>()
-                + 1.0,
+                .sum::<f64>() // Multiplies the polinomial
+                + 1.0, // the action input, in this case a step
         );
         println!("{}", sys[0]);
     }
